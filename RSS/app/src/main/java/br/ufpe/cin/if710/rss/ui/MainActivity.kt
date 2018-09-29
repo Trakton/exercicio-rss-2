@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.preference.PreferenceManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.ViewGroup
@@ -38,7 +39,7 @@ class MainActivity : Activity() {
         super.onResume()
         try {
             GetRssFeedAsynTask { itemsRSS: List<ItemRSS> ->
-                itemsRSS.forEach { dbHelper.insertItem(it) }
+                itemsRSS.forEach { Log.i("XABLAAAAU", dbHelper.insertItem(it).toString()) }
                 val newItemRSS = dbHelper.items
                 val recyclerAdapter = ItemRSSListAdapter(newItemRSS)
                 conteudoRSS.apply {
@@ -84,6 +85,7 @@ class MainActivity : Activity() {
             holder.itemTitulo.text = item.title
             holder.itemTitulo.onClick {
                 val uri = Uri.parse(itemsRSS[i].link)
+                dbHelper.markAsRead(uri.toString())
                 startActivity(Intent(Intent.ACTION_VIEW, uri))
             }
         }

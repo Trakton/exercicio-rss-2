@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.support.annotation.NonNull;
@@ -12,6 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import br.ufpe.cin.if710.rss.domain.ItemRSS;
+
+import static android.database.sqlite.SQLiteDatabase.CONFLICT_IGNORE;
 
 public class SQLiteRSSHelper extends SQLiteOpenHelper {
     //Nome do Banco de Dados
@@ -52,7 +55,7 @@ public class SQLiteRSSHelper extends SQLiteOpenHelper {
     //Definindo constante que representa o comando de criação da tabela no banco de dados
     private static final String CREATE_DB_COMMAND = "CREATE TABLE " + DATABASE_TABLE + " (" +
             ITEM_ROWID +" integer primary key autoincrement, "+
-            ITEM_TITLE + " text not null, " +
+            ITEM_TITLE + " text not null unique, " +
             ITEM_DATE + " text not null, " +
             ITEM_DESC + " text not null, " +
             ITEM_LINK + " text not null, " +
@@ -75,14 +78,14 @@ public class SQLiteRSSHelper extends SQLiteOpenHelper {
     public long insertItem(ItemRSS item) {
         return insertItem(item.getTitle(),item.getPubDate(),item.getDescription(),item.getLink());
     }
-    public long insertItem(String title, String pubDate, String description, String link) {
+    private long insertItem(String title, String pubDate, String description, String link) {
         ContentValues values = new ContentValues();
         values.put(ITEM_TITLE, title);
         values.put(ITEM_DATE, pubDate);
         values.put(ITEM_DESC, description);
         values.put(ITEM_LINK, link);
         values.put(ITEM_UNREAD, true);
-        return getWritableDatabase().insert(DATABASE_TABLE, null, values);
+        return getWritableDatabase().insertWithOnConflict(DATABASE_TABLE, null, values, CONFLICT_IGNORE);
     }
     public ItemRSS getItemRSS(String link) throws SQLException {
         String query = String.format("SELECT * FROM %s WHERE %s.%s = %s",
