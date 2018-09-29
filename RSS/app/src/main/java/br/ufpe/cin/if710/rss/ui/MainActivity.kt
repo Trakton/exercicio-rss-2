@@ -1,4 +1,4 @@
-package br.ufpe.cin.if710.rss
+package br.ufpe.cin.if710.rss.ui
 
 import android.app.Activity
 import android.content.Intent
@@ -11,12 +11,18 @@ import android.support.v7.widget.RecyclerView
 import android.view.Menu
 import android.view.MenuItem
 import android.view.ViewGroup
+import br.ufpe.cin.if710.rss.util.GetRssFeedAsynTask
+import br.ufpe.cin.if710.rss.domain.ItemListViewHolder
+import br.ufpe.cin.if710.rss.R
+import br.ufpe.cin.if710.rss.db.SQLiteRSSHelper
+import br.ufpe.cin.if710.rss.domain.ItemRSS
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.IOException
 
 class MainActivity : Activity() {
     private lateinit var preferences: SharedPreferences
+    private lateinit var dbHelper: SQLiteRSSHelper
 
     val layoutManager = LinearLayoutManager(this)
 
@@ -24,6 +30,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
+        dbHelper = SQLiteRSSHelper.getInstance(this)
     }
 
     // estamos triggando o getRssFeed e definindo o callback a ser executado
@@ -31,7 +38,9 @@ class MainActivity : Activity() {
         super.onResume()
         try {
             GetRssFeedAsynTask { itemsRSS: List<ItemRSS> ->
-                val recyclerAdapter = ItemRSSListAdapter(itemsRSS)
+                itemsRSS.forEach { dbHelper.insertItem(it) }
+                val newItemRSS = dbHelper.items
+                val recyclerAdapter = ItemRSSListAdapter(newItemRSS)
                 conteudoRSS.apply {
                     setHasFixedSize(true)
                     layoutManager = this@MainActivity.layoutManager

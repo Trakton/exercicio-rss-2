@@ -1,8 +1,9 @@
-package br.ufpe.cin.if710.rss
+package br.ufpe.cin.if710.rss.ui
 
 import android.app.Activity
 import android.os.Bundle
 import android.preference.PreferenceFragment
+import br.ufpe.cin.if710.rss.R
 
 class RssFeedPreferenceActivity: Activity() {
 

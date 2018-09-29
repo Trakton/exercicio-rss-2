@@ -1,12 +1,11 @@
-package br.ufpe.cin.if710.rss
+package br.ufpe.cin.if710.rss.util
 
 import android.os.AsyncTask
+import br.ufpe.cin.if710.rss.domain.ItemRSS
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
-import java.nio.charset.Charset
-import java.util.*
 
 class GetRssFeedAsynTask(val callback: (v: List<ItemRSS>) -> Unit): AsyncTask<String, Void, List<ItemRSS>>() {
     // código originário do MainActivity#getRssFeed
