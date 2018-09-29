@@ -1,8 +1,7 @@
 package br.ufpe.cin.if710.rss.ui
 
 import android.app.Activity
-import android.content.Intent
-import android.content.SharedPreferences
+import android.content.*
 import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
@@ -17,6 +16,7 @@ import br.ufpe.cin.if710.rss.domain.ItemListViewHolder
 import br.ufpe.cin.if710.rss.R
 import br.ufpe.cin.if710.rss.db.SQLiteRSSHelper
 import br.ufpe.cin.if710.rss.domain.ItemRSS
+import br.ufpe.cin.if710.rss.util.GetRssFeedService
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.IOException
@@ -26,28 +26,33 @@ class MainActivity : Activity() {
     private lateinit var dbHelper: SQLiteRSSHelper
 
     val layoutManager = LinearLayoutManager(this)
+    lateinit var intentFilter: IntentFilter
+    val receiver = object: BroadcastReceiver() {
+        override fun onReceive(c: Context?, i: Intent?) {
+            if (i?.action?.equals(GetRssFeedService.COMPLETED_DOWNLOAD) == true) {
+                printRSS()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         preferences = PreferenceManager.getDefaultSharedPreferences(this)
         dbHelper = SQLiteRSSHelper.getInstance(this)
+        intentFilter = IntentFilter(GetRssFeedService.COMPLETED_DOWNLOAD)
     }
 
     // estamos triggando o getRssFeed e definindo o callback a ser executado
     override fun onResume() {
         super.onResume()
         try {
-            GetRssFeedAsynTask { itemsRSS: List<ItemRSS> ->
-                itemsRSS.forEach { Log.i("XABLAAAAU", dbHelper.insertItem(it).toString()) }
-                val newItemRSS = dbHelper.items
-                val recyclerAdapter = ItemRSSListAdapter(newItemRSS)
-                conteudoRSS.apply {
-                    setHasFixedSize(true)
-                    layoutManager = this@MainActivity.layoutManager
-                    adapter = recyclerAdapter
-                }
-            }.execute(preferences.getString("rss_feed", getString(R.string.default_rss_feed)))
+            val rssFeed = preferences.getString("rss_feed", getString(R.string.default_rss_feed))
+            val service = Intent(applicationContext, GetRssFeedService::class.java)
+            service.data = Uri.parse(rssFeed)
+            registerReceiver(receiver, intentFilter)
+            startService(service)
+            printRSS()
         } catch (e: IOException) {
             e.printStackTrace()
         }
@@ -65,6 +70,21 @@ class MainActivity : Activity() {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(receiver)
+    }
+
+    fun printRSS() {
+        val items = dbHelper.items
+        val recyclerAdapter = ItemRSSListAdapter(items)
+        conteudoRSS.apply {
+            setHasFixedSize(true)
+            layoutManager = this@MainActivity.layoutManager
+            adapter = recyclerAdapter
         }
     }
 
@@ -89,6 +109,5 @@ class MainActivity : Activity() {
                 startActivity(Intent(Intent.ACTION_VIEW, uri))
             }
         }
-
     }
 }
