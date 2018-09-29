@@ -2,29 +2,33 @@ package br.ufpe.cin.if710.rss
 
 import android.app.Activity
 import android.content.Intent
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.view.Menu
+import android.view.MenuItem
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.sdk25.coroutines.onClick
 import java.io.IOException
 
 class MainActivity : Activity() {
-    private lateinit var RSS_FEED : String
+    private lateinit var preferences: SharedPreferences
 
     val layoutManager = LinearLayoutManager(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        RSS_FEED = getString(R.string.rssfeed)
+        preferences = PreferenceManager.getDefaultSharedPreferences(this)
     }
 
     // estamos triggando o getRssFeed e definindo o callback a ser executado
-    override fun onStart() {
-        super.onStart()
+    override fun onResume() {
+        super.onResume()
         try {
             GetRssFeedAsynTask { itemsRSS: List<ItemRSS> ->
                 val recyclerAdapter = ItemRSSListAdapter(itemsRSS)
@@ -33,9 +37,24 @@ class MainActivity : Activity() {
                     layoutManager = this@MainActivity.layoutManager
                     adapter = recyclerAdapter
                 }
-            }.execute(RSS_FEED)
+            }.execute(preferences.getString("rss_feed", getString(R.string.default_rss_feed)))
         } catch (e: IOException) {
             e.printStackTrace()
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        return when (item?.itemId) {
+            R.id.action_settings -> {
+                startActivity(Intent(applicationContext, RssFeedPreferenceActivity::class.java))
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
         }
     }
 
